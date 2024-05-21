@@ -33,9 +33,9 @@ func encrypt(plainText []byte, key []byte) ([]byte, error) {
 }
 
 func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-    if len(ciphertext) < 12 {
-        return nil, errors.New("ciphertext is too short")
-    }
+	if len(ciphertext) < 12 {
+		return nil, errors.New("ciphertext is too short")
+	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -56,12 +56,14 @@ func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	return plainText, nil
 }
 
+var (
+	encArg string
+	decArg string
+)
+
 func main() {
 	encCommand := flag.NewFlagSet("enc", flag.ExitOnError)
 	decCommand := flag.NewFlagSet("dec", flag.ExitOnError)
-
-	encArg := encCommand.String("t", "", "The text to encrypt")
-	decArg := decCommand.String("t", "", "The text to decrypt")
 
 	if len(os.Args) < 2 {
 		fmt.Println("expected 'key', 'enc' or 'dec' subcommands")
@@ -70,36 +72,40 @@ func main() {
 
 	switch os.Args[1] {
 	case "key":
-		fmt.Println("Current encryption key:", os.Getenv("ENCRYPTION_KEY"))
+		fmt.Println("🗝️", os.Getenv("ENCRYPTION_KEY"))
 	case "enc":
 		encCommand.Parse(os.Args[2:])
-		if *encArg == "" {
-            fmt.Println("No text to encrypt")
-            return
-        }
+		if len(encCommand.Args()) > 0 {
+			encArg = encCommand.Args()[0]
+		} else {
+			fmt.Println("No text to encrypt")
+			return
+		}
 		key, err := hex.DecodeString(os.Getenv("ENCRYPTION_KEY"))
-        if err != nil {
-            fmt.Println("No ENCRYPTION_KEY, err:", err)
-            return
-        }
-		ciphertext, err := encrypt([]byte(*encArg), key)
+		if err != nil {
+			fmt.Println("No ENCRYPTION_KEY, err:", err)
+			return
+		}
+		ciphertext, err := encrypt([]byte(encArg), key)
 		if err != nil {
 			fmt.Println("Error encrypting:", err)
 			return
 		}
-		fmt.Printf("Encrypted: %x\n", ciphertext)
+		fmt.Printf("🔒 %x\n", ciphertext)
 	case "dec":
 		decCommand.Parse(os.Args[2:])
-        if *decArg == "" {
-            fmt.Println("No text to decrypt")
-            return
-        }
+		if len(decCommand.Args()) > 0 {
+			decArg = decCommand.Args()[0]
+		} else {
+			fmt.Println("No text to decrypt")
+			return
+		}
 		key, err := hex.DecodeString(os.Getenv("ENCRYPTION_KEY"))
-        if err != nil {
-            fmt.Println("No ENCRYPTION_KEY, err:", err)
-            return
-        }
-		ciphertext, err := hex.DecodeString(*decArg)
+		if err != nil {
+			fmt.Println("No ENCRYPTION_KEY, err:", err)
+			return
+		}
+		ciphertext, err := hex.DecodeString(decArg)
 		if err != nil {
 			fmt.Println("Error decoding ciphertext:", err)
 			return
@@ -109,7 +115,7 @@ func main() {
 			fmt.Println("Error decrypting:", err)
 			return
 		}
-		fmt.Printf("Decrypted: %s\n", decryptedText)
+		fmt.Printf("🔓 %s\n", decryptedText)
 	default:
 		fmt.Println("expected 'key', 'enc' or 'dec' subcommands")
 		os.Exit(1)
