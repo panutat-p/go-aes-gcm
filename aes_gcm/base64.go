@@ -17,7 +17,6 @@ func CheckKey(keyB64 string) error {
 		return errors.New("key length is not 32 bytes")
 	}
 	return nil
-
 }
 
 func Encrypt(keyB64 string, plainText string) (string, error) {
