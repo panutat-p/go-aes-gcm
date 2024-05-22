@@ -8,13 +8,17 @@ import (
 	"io"
 )
 
-func Encrypt(plainText []byte, key []byte) ([]byte, error) {
+const (
+	NOUNCE_SIZE = 12
+)
+
+func encryptAesGcm(key []byte, plainText []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	nonce := make([]byte, 12)
+	nonce := make([]byte, NOUNCE_SIZE)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
@@ -28,8 +32,8 @@ func Encrypt(plainText []byte, key []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	if len(ciphertext) < 12 {
+func decryptAesGcm(key []byte, ciphertext []byte) ([]byte, error) {
+	if len(ciphertext) < NOUNCE_SIZE {
 		return nil, errors.New("ciphertext is too short")
 	}
 
@@ -43,7 +47,7 @@ func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce, ciphertext := ciphertext[:12], ciphertext[12:]
+	nonce, ciphertext := ciphertext[:NOUNCE_SIZE], ciphertext[NOUNCE_SIZE:]
 	plainText, err := aesgcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, err

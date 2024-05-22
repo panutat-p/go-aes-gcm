@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -15,8 +14,8 @@ var (
 	helpText = `
 Usage:
   key                Display the encryption key.
-  enc <text>         Encrypt the provided text.
-  dec <ciphertext>   Decrypt the provided ciphertext.
+  enc <text>         encryptAesGcm the provided text.
+  dec <ciphertext>   decryptAesGcm the provided ciphertext.
   help               Display this help message.
 `
 )
@@ -26,7 +25,7 @@ func main() {
 	decCommand := flag.NewFlagSet("dec", flag.ExitOnError)
 
 	if len(os.Args) < 2 {
-		fmt.Println("expected 'key', 'enc' or 'dec' subcommands")
+		fmt.Print(helpText)
 		os.Exit(1)
 	}
 
@@ -41,53 +40,46 @@ func main() {
 			fmt.Println("Invalid argument, err:", err)
 			return
 		}
-		if len(encCommand.Args()) > 0 {
-			encArg = encCommand.Args()[0]
-		} else {
-			fmt.Println("No text to Encrypt")
-			return
+		if len(encCommand.Args()) == 0 {
+			fmt.Println("No argument provided")
+			os.Exit(1)
 		}
-		key, err := hex.DecodeString(os.Getenv("ENCRYPTION_KEY"))
+		encArg = encCommand.Args()[0]
+		key := os.Getenv("ENCRYPTION_KEY")
+		if key == "" {
+			fmt.Println("No ENCRYPTION_KEY provided")
+			os.Exit(1)
+		}
+		ciphertext, err := aes_gcm.Encrypt(key, encArg)
 		if err != nil {
-			fmt.Println("No ENCRYPTION_KEY, err:", err)
+			fmt.Println("Failed to Encrypt, err:", err)
 			return
 		}
-		ciphertext, err := aes_gcm.Encrypt([]byte(encArg), key)
-		if err != nil {
-			fmt.Println("Error encrypting, err:", err)
-			return
-		}
-		fmt.Printf("🔒 %x\n", ciphertext)
+		fmt.Printf("🔒 %s\n", ciphertext)
 	case "dec":
 		err := decCommand.Parse(os.Args[2:])
 		if err != nil {
 			fmt.Println("Invalid argument, err:", err)
-			return
+			os.Exit(1)
 		}
-		if len(decCommand.Args()) > 0 {
-			decArg = decCommand.Args()[0]
-		} else {
-			fmt.Println("No text to Decrypt")
-			return
+		if len(decCommand.Args()) == 0 {
+			fmt.Println("No argument provided")
+			os.Exit(1)
 		}
-		key, err := hex.DecodeString(os.Getenv("ENCRYPTION_KEY"))
+		decArg = decCommand.Args()[0]
+		key := os.Getenv("ENCRYPTION_KEY")
+		if key == "" {
+			fmt.Println("No ENCRYPTION_KEY provided")
+			os.Exit(1)
+		}
+		decryptedText, err := aes_gcm.Decrypt(key, decArg)
 		if err != nil {
-			fmt.Println("No ENCRYPTION_KEY, err:", err)
-			return
-		}
-		ciphertext, err := hex.DecodeString(decArg)
-		if err != nil {
-			fmt.Println("Error decoding ciphertext:", err)
-			return
-		}
-		decryptedText, err := aes_gcm.Decrypt(ciphertext, key)
-		if err != nil {
-			fmt.Println("Error decrypting:", err)
-			return
+			fmt.Println("Failed to Decrypt:", err)
+			os.Exit(1)
 		}
 		fmt.Printf("📄 %s\n", decryptedText)
 	default:
-		fmt.Println("expected 'key', 'enc' or 'dec' subcommands")
+		fmt.Print(helpText)
 		os.Exit(1)
 	}
 }
