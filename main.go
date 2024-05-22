@@ -9,13 +9,14 @@ import (
 )
 
 var (
+	key      = os.Getenv("ENCRYPTION_KEY")
 	encArg   string
 	decArg   string
 	helpText = `
 Usage:
   key                Display the encryption key.
-  enc <text>         encryptAesGcm the provided text.
-  dec <ciphertext>   decryptAesGcm the provided ciphertext.
+  enc <text>         Encrypt using AES256-GCM to base64.
+  dec <ciphertext>   Decrypt using AES256-GCM to string.
   help               Display this help message.
 `
 )
@@ -33,21 +34,26 @@ func main() {
 	case "help":
 		fmt.Print(helpText)
 	case "key":
-		fmt.Println("🗝️", os.Getenv("ENCRYPTION_KEY"))
+		err := aes_gcm.CheckKey(key)
+		if err != nil {
+			fmt.Println("Invalid ENCRYPTION_KEY, err:", err)
+			os.Exit(1)
+		}
+		fmt.Println("🗝️", key)
 	case "enc":
 		err := encCommand.Parse(os.Args[2:])
 		if err != nil {
 			fmt.Println("Invalid argument, err:", err)
-			return
+			os.Exit(1)
 		}
 		if len(encCommand.Args()) == 0 {
 			fmt.Println("No argument provided")
 			os.Exit(1)
 		}
 		encArg = encCommand.Args()[0]
-		key := os.Getenv("ENCRYPTION_KEY")
-		if key == "" {
-			fmt.Println("No ENCRYPTION_KEY provided")
+		err = aes_gcm.CheckKey(key)
+		if err != nil {
+			fmt.Println("Invalid ENCRYPTION_KEY, err:", err)
 			os.Exit(1)
 		}
 		ciphertext, err := aes_gcm.Encrypt(key, encArg)
@@ -67,9 +73,9 @@ func main() {
 			os.Exit(1)
 		}
 		decArg = decCommand.Args()[0]
-		key := os.Getenv("ENCRYPTION_KEY")
-		if key == "" {
-			fmt.Println("No ENCRYPTION_KEY provided")
+		err = aes_gcm.CheckKey(key)
+		if err != nil {
+			fmt.Println("Invalid ENCRYPTION_KEY, err:", err)
 			os.Exit(1)
 		}
 		decryptedText, err := aes_gcm.Decrypt(key, decArg)

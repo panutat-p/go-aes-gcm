@@ -5,7 +5,7 @@ https://github.com/panutat-p/go-aes-gcm
 ## Install
 
 ```sh
-go install github.com/panutat-p/go-aes-gcm@v0.1.0
+go install github.com/panutat-p/go-aes-gcm@v0.2.0
 ```
 
 ```sh
@@ -14,8 +14,12 @@ ls $(go env GOPATH)/bin
 
 ## Usage
 
+```shell
+openssl rand -base64 32
+```
+
 ```sh
-export ENCRYPTION_KEY='5598e3d8a6d44fe2fdb91bae21d4d5f5716ce138e05dd30fc58935c752c0a07c'
+export ENCRYPTION_KEY='KPFjD5EOp+Eb/f/MfBa7cwOYCEmFeP10NrASHHf37nY='
 ```
 
 ```sh
